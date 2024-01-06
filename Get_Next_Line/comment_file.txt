@@ -1,0 +1,90 @@
+
+#include "get_next_line.h"
+#include <fcntl.h>
+# include <stdio.h>
+# include <fcntl.h>
+
+char	*ft_read_line(char *start)
+{
+	int		i;
+	char	*line;
+
+	if (!start || !start[0]) //start is either NULL or points to an empty string//
+		return (NULL);
+	i = 0;
+	while (start[i] && start[i] != '\n')
+		i++;
+	if (start[i] == '\n') //Iterates through the characters in the start string until it finds a newline '\n'/
+		i++;
+	line = (char *)malloc ((i + 1) * sizeof(char)); //Allocates memory for the new string + '\n' +'\0'//
+	if (!line) //Checks if the allocation was successful.
+		return (NULL);
+	i = 0;
+	while (start[i] && start[i] != '\n') //Copies characters from the start string to the new line//
+	{
+		line[i] = start[i];
+		i++;
+	}
+	if (start[i] == '\n')
+		line[i++] = '\n';
+	line[i] = '\0';
+	return (line); //Adds the null terminator at the end of the new//
+}
+
+char	*ft_next_line(char *start)
+{
+	char	*new_buffer;
+	int		i;
+	int		j;
+
+	i = 0;
+	while (start[i] && start[i] != '\n') //Adds the null terminator at the end of the new//
+		i++;
+	if (start[i] == '\0')  //If the newline character is not found  it frees the original string //
+	{
+		free(start);
+		return (NULL);
+	}
+	i += (start[i] == '\n'); //if ''\n' is found increment to move to next line//
+	new_buffer = (char *)malloc(1 + ft_strlen(start) - i); // allocates memory for the new string into new buffer considering the remaining length of the string + '\0'//
+	if (!new_buffer) //Checks if all good//
+		return (NULL);
+	j = 0;
+	while (start[i + j]) //Copies the remaining characters from the start string /
+	{
+		new_buffer[j] = start[i + j];
+		j++;
+	}
+	new_buffer[j] = '\0'; // adds null to make a valid C string//
+	free(start);
+	return (new_buffer);
+}
+
+
+char	*get_next_line(int fd) 
+{
+	char		*buffer_content;
+	int			fd_read; //a static pointer to a character string//
+	static char	*start_str; //used to store remaining content from previous reads)//
+
+	if (fd < 0 || BUFFER_SIZE <= 0) //file is valid and buffer is greater than 0)//
+		return (NULL);
+	fd_read = 1;
+	buffer_content = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));//allocates memory for the buffer//
+	if (!buffer_content) //Checks if the memory allocation was successful//
+		return (NULL);
+	while (fd_read != 0) 
+	{
+		fd_read = read(fd, buffer_content, BUFFER_SIZE);//Reads data from the file descriptor fd into the buffer (buffer_content).//
+		if (fd_read == -1)
+			return (free(buffer_content), (NULL));
+		buffer_content[fd_read] = '\0';//Adds a null terminator to the end of the buffer //
+		start_str = ft_strjoin(start_str, buffer_content);
+		if (ft_strchr(start_str, '\n'))// If a newline character is found it restart the loop//
+			break ;
+	}
+	free(buffer_content);
+	buffer_content = ft_read_line(start_str); //Get and return the first line//
+	start_str = ft_next_line(start_str);// adds the remaining content after the first line//
+	return (buffer_content); //Returns the pointer to the first line read from the file descriptor.//
+}
